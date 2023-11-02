@@ -1,37 +1,79 @@
 import hashlib
 import socket
+from threading import Thread
+import multiprocessing
+
+class Secret:
+    secret = '12345'
 
 class client:
-    def __init__(self):
+    WORK = 1
+    FINISH = 2
+    def __init__(self, secret):
         self.socket = socket.socket()
-
+        self.secret = secret
+        self.start = -1
+        self.end = -1
+        self.result = None
+        self.status = client.WORK
     def main_client(self):
         self.socket.connect(('127.0.0.1',8200))
 
-secret = '12345'
-length = len(secret)
-p = hashlib.md5(secret.encode()).hexdigest()
+    def set_work(self, start, end):
+        self.start = start
+        self.end = end
+
+    @staticmethod
+    def encrypt_guess(guess):
+
+        my_guess = hashlib.md5(guess.encode()).hexdigest()
+        return my_guess
+
+    def find_secret(self):
+        for i in range(self.start, self.end):
+            if self.status == client.FINISH:
+                return
+
+            guess = str(i).zfill(len(Secret.secret))
+            if client.encrypt_guess(guess) == self.secret:
+
+                self.result = guess
 
 
-def encrypt_guess(guess):
+def main():
+    length = len(Secret.secret)
+    p = client.encrypt_guess(Secret.secret)
 
-    my_guess = hashlib.md5(guess.encode()).hexdigest()
-    return my_guess
+    cpu_count = multiprocessing.cpu_count()
+    clients = []
+    threads = []
+    chunk = 10**length/cpu_count
+    for i in range(cpu_count):
+        start = int(i * chunk)
+        end = int((i + 1) * chunk)
+        my_client = client(p)
+        my_client.set_work(start, end)
+        clients.append(my_client)
+        my_thread = Thread(target=my_client.find_secret)
+        threads.append(my_thread)
+        my_thread.start()
+
+    found = False
+    while not found:
+        for i in range(cpu_count):
+            if not threads[i].is_alive():
+                if clients[i].result == None:
+                    pass
+                else:
+                    print(f"found -> {clients[i].result}")
+                    found = True
+                    for j in range(cpu_count):
+                        clients[j].status = client.FINISH
+                    break
 
 
-def find_secret(start, end):
-    for i in range(start, end):
-        guess = str(i).zfill(length)
-        if encrypt_guess(guess) == p:
-            print(guess)
-            return True, guess
-    return False, None
+
 
 
 if __name__ == "__main__":
-    for i in range(0, 10**length, 100):
-        print(f"range = [{i}, {i+100}]")
-        status, res = find_secret(i, i+100)
-        if status:
-            print(f"found --> {res}")
-            break
+    main()
