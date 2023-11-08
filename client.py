@@ -5,7 +5,7 @@ import multiprocessing
 
 class Secret:
     secret = '12345'
-
+#hello
 class client:
     WORK = 1
     FINISH = 2
