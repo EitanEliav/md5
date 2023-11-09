@@ -3,12 +3,15 @@ import socket
 from threading import Thread
 import multiprocessing
 
+
 class Secret:
     secret = '12345'
-#hello
+
+
 class client:
     WORK = 1
     FINISH = 2
+
     def __init__(self, secret):
         self.socket = socket.socket()
         self.secret = secret
@@ -70,10 +73,6 @@ def main():
                     for j in range(cpu_count):
                         clients[j].status = client.FINISH
                     break
-                    print("eli")
-
-
-
 
 
 if __name__ == "__main__":
