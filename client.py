@@ -70,6 +70,7 @@ def main():
                     for j in range(cpu_count):
                         clients[j].status = client.FINISH
                     break
+                    print("eli")
 
 
 
